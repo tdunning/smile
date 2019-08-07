@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2010 Haifeng Li
- *   
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *  
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -17,13 +17,14 @@ package smile.plot;
 
 import java.awt.Color;
 import java.util.Arrays;
+
 import smile.math.Math;
 import smile.math.matrix.SparseMatrix;
 
 /**
  * A graphical representation of sparse matrix data. Optionally, the values
  * in the matrix can be represented as colors.
- * 
+ *
  * @author Haifeng Li
  */
 public class SparseMatrixPlot extends Plot {
@@ -86,6 +87,7 @@ public class SparseMatrixPlot extends Plot {
 
     /**
      * Constructor. Use jet color palette.
+     *
      * @param k the number of colors in the palette.
      */
     public SparseMatrixPlot(SparseMatrix sparse, int k) {
@@ -94,6 +96,7 @@ public class SparseMatrixPlot extends Plot {
 
     /**
      * Constructor.
+     *
      * @param palette the color palette.
      */
     public SparseMatrixPlot(SparseMatrix sparse, Color[] palette) {
@@ -114,31 +117,34 @@ public class SparseMatrixPlot extends Plot {
 
         min = Double.POSITIVE_INFINITY;
         max = Double.NEGATIVE_INFINITY;
-        for (double z : sparse.values()) {
-            if (z < min) {
-                min = z;
-            }
-            if (z > max) {
-                max = z;
-            }
-        }
+        sparse.foreachNonzero(
+                (i, j, z) -> {
+                    if (z < min) {
+                        min = z;
+                    }
+                    if (z > max) {
+                        max = z;
+                    }
+                });
 
         // In case of outliers, we use 1% and 99% quantiles as lower and
         // upper limits instead of min and max.
         double[] values = new double[sparse.size()];
-        int i = 0;
-        for (double z : sparse.values()) {
-            if (!Double.isNaN(z)) {
-                values[i++] = z;
-            }
-        }
+        int[] i = new int[1];
+        sparse.foreachNonzero(
+                (row, column, z) -> {
+                    if (!Double.isNaN(z)) {
+                        values[i[0]++] = z;
+                    }
+                });
 
-        if (i > 0) {
-            Arrays.sort(values, 0, i);
-            min = values[(int) Math.round(0.01 * i)];
-            max = values[(int) Math.round(0.99 * (i-1))];
+        if (i[0] > 0) {
+            Arrays.sort(values, 0, i[0]);
+            min = values[(int) Math.round(0.01 * i[0])];
+            max = values[(int) Math.round(0.99 * (i[0] - 1))];
             width = (max - min) / palette.length;
         }
+
     }
 
     @Override
@@ -156,7 +162,7 @@ public class SparseMatrixPlot extends Plot {
                     double z = sparse.get(i, j);
                     if (z != 0.0 && !Double.isNaN(z)) {
                         int k = (int) ((z - min) / width);
-                        
+
                         if (k < 0) {
                             k = 0;
                         }
@@ -164,7 +170,7 @@ public class SparseMatrixPlot extends Plot {
                         if (k >= palette.length) {
                             k = palette.length - 1;
                         }
-                        
+
                         g.setColor(palette[k]);
 
                         start[0] = x[j];
@@ -281,6 +287,7 @@ public class SparseMatrixPlot extends Plot {
 
     /**
      * Create a sparse matrix plot canvas.
+     *
      * @param sparse a sparse matrix.
      */
     public static PlotCanvas plot(SparseMatrix sparse) {
@@ -299,6 +306,7 @@ public class SparseMatrixPlot extends Plot {
 
     /**
      * Create a sparse matrix plot canvas.
+     *
      * @param sparse a sparse matrix.
      */
     public static PlotCanvas plot(SparseMatrix sparse, Color color) {
@@ -317,6 +325,7 @@ public class SparseMatrixPlot extends Plot {
 
     /**
      * Create a sparse matrix plot canvas.
+     *
      * @param sparse a sparse matrix.
      */
     public static PlotCanvas plot(SparseMatrix sparse, Color[] palette) {
